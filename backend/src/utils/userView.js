@@ -1,10 +1,12 @@
-import { leagueView } from "./leagues.js";
+import { leagueView } from "../services/league.service.js";
 
+// The public shape of a user. Never includes the password hash.
 export function userView(user) {
   return {
     id: user._id,
     name: user.name,
     email: user.email,
+    role: user.role,
     bio: user.bio,
     avatarStyle: user.avatarStyle,
     xp: user.xp,
@@ -15,7 +17,6 @@ export function userView(user) {
     maxHearts: user.hearts.max,
     activeCourseId: user.activeCourseId,
     courseProfiles: Object.fromEntries(user.courseProfiles ?? []),
-    lessonProgress: user.lessonProgress,
     completedLessons: user.completedLessons,
     totalStudySeconds: user.totalStudySeconds,
     league: leagueView(user),
