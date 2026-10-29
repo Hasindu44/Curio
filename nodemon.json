@@ -1,0 +1,6 @@
+{
+  "watch": ["server", ".env", "src/data/mockData.js"],
+  "ext": "js,json,env",
+  "ignore": ["node_modules", "dist"],
+  "delay": "500"
+}
