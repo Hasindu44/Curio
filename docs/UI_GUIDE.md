@@ -8,7 +8,7 @@ mascot, is original SVG; no third-party brand artwork is included.
 
 ## What is included
 
-- Design tokens in `tailwind.config.js` and `src/index.css`. Soft tints are CSS
+- Design tokens in `frontend/tailwind.config.js` and `frontend/src/index.css`. Soft tints are CSS
   variables, so `bg-leaf-soft` etc. switch automatically in dark mode.
 - Shared controls: `.primary-button`, `.secondary-button`, `.sky-button`,
   `.danger-button`, `.gold-button` (add `.btn-sm`), `.choice` tiles, `.field`.
@@ -21,22 +21,16 @@ mascot, is original SVG; no third-party brand artwork is included.
 
 The font families remain Baloo 2, Nunito, and JetBrains Mono. Their Latin variable
 fonts are bundled locally through Fontsource so rendering does not depend on
-Google Fonts. License notices are included in `public/FONT-LICENSES.txt`.
+Google Fonts. License notices are included in `frontend/public/FONT-LICENSES.txt`.
 Lesson/math code is loaded separately from the landing page.
 
 ## Run locally
 
-Use `npm run dev:full` for the frontend and existing Express API. Database-backed
-accounts still need a working `MONGODB_URI` and `JWT_SECRET` in your private
-`.env`; this visual update does not change those settings.
+See the setup steps in the [README](../README.md). `npm run dev` starts the
+web app and the API together.
 
-To preview without the API, set `VITE_USE_MOCKS=true` in your local environment
-and restart `npm run dev`. Mock mode uses a demo learner and is not real
-authentication or database persistence. Set it back to `false` for the API.
-
-Course setup records learning preferences. It does not generate new curriculum.
-Some catalog nodes may not yet have authored lessons; unavailable lessons now
-show a recovery screen.
+Some catalog nodes are drafts without questions; they show as locked “coming
+soon” steps on the path, and opening one shows a recovery screen.
 
 ## Verification
 
@@ -45,34 +39,38 @@ npm run build
 npm run test:ui
 ```
 
+Run these from the project root.
+
 UI tests use Playwright and intercept all API requests with fixtures; they do not
 write to MongoDB. They start Vite on port 5178 and cover theme persistence,
 onboarding, course switching, dialog keyboard behavior, profile editing, lesson
-completion, the loader, and mobile layouts. Screenshots and failure traces go in
+completion, the loader, mobile layouts, and the Lesson Studio CRUD screens. Screenshots and failure traces go in
 `test-results/` (ignored by Git).
 
-On Windows the test configuration uses installed Google Chrome. On other
+On Windows the test configuration uses Microsoft Edge, which ships with Windows. On other
 platforms, install Playwright Chromium first with `npx playwright install chromium`.
 
 ## Main design files
 
-- `src/index.css`: semantic surfaces, controls, sidebar, and typography.
-- `src/components/CourseArtwork.jsx`: the original subject illustration system.
-- `src/components/Brand.jsx`: `BRAND` name constant, logo mark, wordmark and the liquid-fill loader.
-- `src/components/StatusIcons.jsx`: animated flame, gem, XP, heart, trophy and medal icons.
-- `src/components/LeagueCrest.jsx`: ten flat league badges, Bronze → Diamond.
-- `src/components/Modal.jsx`: reusable dialogs with focus handling.
-- `src/components/LessonFooter.jsx`: the check / feedback bar used by every lesson step.
-- `src/components/Mascot.jsx`: Pip the robot (`happy` waves, `excited` cheers, `sad`, `thinking`).
-- `src/pages/Landing.jsx`, `Dashboard.jsx`, `Profile.jsx`, `Leaderboard.jsx`:
-  primary screen layouts.
+- `frontend/src/index.css`: semantic surfaces, controls, sidebar, and typography.
+- `frontend/src/components/course/CourseArtwork.jsx`: the original subject illustration system.
+- `frontend/src/components/common/Brand.jsx`: `BRAND` name constant, logo mark, wordmark and the liquid-fill loader.
+- `frontend/src/components/common/StatusIcons.jsx`: animated flame, gem, XP, heart, trophy and medal icons.
+- `frontend/src/components/gamification/LeagueCrest.jsx`: ten flat league badges, Bronze → Diamond.
+- `frontend/src/components/common/Modal.jsx`: reusable dialogs with focus handling;
+  `ConfirmDialog.jsx` builds the delete confirmations on top of it.
+- `frontend/src/components/common/FormField.jsx`: label, hint and error message
+  for one input, with `aria-invalid` and `aria-describedby` set.
+- `frontend/src/components/lesson/LessonFooter.jsx`: the check / feedback bar used by every lesson step.
+- `frontend/src/components/common/Mascot.jsx`: Pip the robot (`happy` waves, `excited` cheers, `sad`, `thinking`).
+- `frontend/src/pages/`: one component per screen; `pages/studio/` holds the
+  Lesson Studio list, detail and editor.
 
-The backend, grading model, and MongoDB configuration are separate concerns.
-Passing these fixture-based UI tests does not establish production readiness.
+The API is tested separately with `npm test`.
 
 ## Motion
 
-Icons animate with CSS keyframes in `src/index.css` (`anim-flicker`,
+Icons animate with CSS keyframes in `frontend/src/index.css` (`anim-flicker`,
 `anim-heartbeat`, `anim-shine`, `anim-zap`, `anim-float`, `anim-blink`, …).
 Every loop starts and ends at rest, so with reduced motion the icons sit still.
 Pass `still` to a status icon or `animated={false}` to the mascot to freeze it.
@@ -87,11 +85,10 @@ Ruby, Emerald, Amethyst, Pearl, Obsidian, Diamond.
 - At the end of the week the top 7 move up a tier and the bottom 5 move down.
   Bronze never demotes, Diamond never promotes, and cohorts of 12 or fewer
   skip demotion.
-- Weeks settle lazily on the learner's next request (`server/lib/leagues.js`),
+- Weeks settle lazily on the learner's next request (`backend/src/services/league.service.js`),
   so no scheduled job is needed. The result is shown once in a dialog and then
   marked seen via `POST /api/leagues/result/seen`.
 - `GET /api/leaderboard` returns the week, tiers, zones, cohort rows and any
-  unseen result. `src/lib/leagues.js` mirrors the tier list for mock mode.
+  unseen result. `frontend/src/lib/leagues.js` mirrors the tier list for the UI.
 
-Existing accounts start in Bronze; the old lifetime `leaguePoints` field is
-still updated but no longer decides the league.
+Existing accounts start in Bronze.

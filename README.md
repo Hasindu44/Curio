@@ -1,148 +1,199 @@
-# Curio — Full-stack STEM Learning Platform
+# Curio: STEM learning platform
 
-For the refreshed interface, local font setup, and browser checks, see
-[the UI guide](docs/UI_GUIDE.md).
+Curio is a full-stack web application for learning maths, physics, chemistry
+and computer science through short interactive lessons. Learners follow a
+course path, answer questions, earn XP and compete in weekly leagues.
+Instructors use the **Lesson Studio** to create, view, edit and delete
+lessons, which are stored in MongoDB.
 
-Curio includes a React/Vite client and an Express/MongoDB API. Authentication, learner profiles, XP, streaks, hearts, course preferences, lesson attempts, progress, and weekly league points are persisted in MongoDB when `VITE_USE_MOCKS=false`.
+**Stack:** React 18 + Vite + Tailwind CSS (frontend) · Node.js + Express 5
+(backend) · MongoDB + Mongoose · JWT authentication · Zod validation.
 
-## Start with MongoDB
+![Lesson Studio](docs/screenshots/05-studio-list.png)
 
-```bash
-npm install
-npm run dev:full
-```
+## Features
 
-The included `.env` targets a local MongoDB instance at `mongodb://127.0.0.1:27017/arcwise`. To use MongoDB Atlas, replace `MONGODB_URI` in `.env` with your Atlas driver connection string. Do not add `.env` to source control; it is ignored by Git. See `docs/MONGODB_ARCHITECTURE.md` for the full data model and deployment notes.
-
-A Duolingo-style skill tree + Brilliant-style interactive problems, built with
-React, Vite, Tailwind, and React Router. This is the **frontend** half of a
-MERN stack project — it's built to plug straight into an Express + MongoDB
-backend once you have one.
-
-The planned MongoDB collections, indexes, atomic completion flow, and API
-contracts are documented in [`docs/MONGODB_ARCHITECTURE.md`](docs/MONGODB_ARCHITECTURE.md).
-
-## Run it
-
-```bash
-npm install
-npm run dev
-```
-
-Open http://localhost:5173. It runs fully standalone right now using mock
-data in `src/data/mockData.js` — no backend required to demo it.
+| Area | What it does |
+|---|---|
+| **Create** | Instructors add lessons through a form: title, auto-generated URL slug, course, position, XP, difficulty, duration, publish toggle, and a question editor (multiple choice, number answer, put-in-order). Learners create accounts through the sign-up form. |
+| **Read** | Studio list with **search** (title/slug/summary), **filters** (course, status, difficulty), **sorting** (updated, title, XP, course order) and **pagination**. Filters are kept in the URL. A lesson **detail page** shows its questions, metadata and learner statistics. Learners see the catalog, their path and lessons. |
+| **Update** | Edit any lesson with the same form, pre-filled. Learners edit their profile and course preferences. |
+| **Delete** | Delete a lesson after a confirmation dialog; its attempts and learner progress are removed with it. Learners can delete their account after re-entering their password. |
+| **Validation** | Every form is checked in the browser first (messages appear next to each field), and every request is validated again on the server with Zod and Mongoose. Server errors such as a duplicate slug or email are shown on the matching field. |
+| **Roles** | `learner` (default) and `instructor`. The Studio pages and `/api/studio` endpoints are only available to instructors. |
+| **Responsive UI** | Sidebar on desktop, icon rail on tablets, bottom navigation on phones; light and dark themes. |
 
 ## Project structure
 
 ```
-src/
-  api/api.js          <- All backend calls go through here
-  context/AuthContext.jsx <- current user, hearts, XP, streak state
-  data/mockData.js     <- stand-in for your MongoDB collections
-  components/          <- Navbar, HeartsDisplay, StreakBadge, XPBadge,
-                           SkillNode (skill-tree), QuestionCard (the
-                           interactive question engine: MCQ, numeric
-                           input, step-ordering)
-  pages/
-    Landing.jsx         <- marketing page
-    Login.jsx / Signup.jsx
-    Dashboard.jsx        <- skill-tree per course
-    Lesson.jsx            <- runs a lesson's question sequence
-    Profile.jsx
-    Leaderboard.jsx
+.
+├── backend/                  Express REST API
+│   ├── src/
+│   │   ├── config/           environment variables, DB connection, DNS
+│   │   ├── models/           Mongoose schemas: User, Course, Lesson, Attempt
+│   │   ├── validators/       Zod request schemas
+│   │   ├── middleware/       auth (JWT, roles), validate, error handler
+│   │   ├── controllers/      request handlers, one file per resource
+│   │   ├── routes/           URL → middleware → controller
+│   │   ├── services/         business logic (progress/XP, weekly leagues)
+│   │   ├── utils/            ApiError, slug helpers, public user view
+│   │   ├── seed/             starter catalog + seed script
+│   │   ├── app.js            builds the Express app
+│   │   └── server.js         connects to MongoDB and starts listening
+│   └── tests/                API integration tests (node:test + supertest)
+├── frontend/                 React single-page app
+│   ├── src/
+│   │   ├── api/              axios client + one module per resource
+│   │   ├── components/
+│   │   │   ├── common/       Modal, ConfirmDialog, FormField, Alert, …
+│   │   │   ├── layout/       Navbar, AuthLayout
+│   │   │   ├── course/       course path, course picker
+│   │   │   ├── lesson/       question player, interactive labs
+│   │   │   ├── gamification/ streak, XP, hearts, league badges
+│   │   │   └── studio/       Lesson Studio parts (question editor, chips, dialogs)
+│   │   ├── context/          AuthContext, ThemeContext
+│   │   ├── lib/              validation rules, studio helpers, leagues, sound
+│   │   ├── pages/            one component per route (pages/studio for CRUD)
+│   │   └── routes/           ProtectedRoute (login and role checks)
+│   └── tests/                Playwright UI tests
+├── docs/                     database design (ERD), UI guide, screenshots
+├── scripts/                  screenshot capture script
+└── package.json              npm workspaces: runs both apps together
 ```
 
-## Wiring up your Express + MongoDB backend
+## Setup
 
-Every function in `src/api/api.js` already has the real `axios` call
-written next to a mock fallback. Once your routes exist, flip one flag:
+### Requirements
 
-```js
-// src/api/api.js
-const USE_MOCKS = false;
+- Node.js 20 or newer (tested with Node 24)
+- A MongoDB database: a free [MongoDB Atlas](https://www.mongodb.com/atlas)
+  cluster, or MongoDB Community Server running locally
+
+### Steps
+
+```bash
+# 1. Install dependencies for both apps (from the project root)
+npm install
+
+# 2. Create the backend configuration
+cp backend/.env.example backend/.env
+#    then edit backend/.env: set MONGODB_URI and JWT_SECRET
+
+# 3. Start the API (port 4000) and the web app (port 5173) together
+npm run dev
 ```
 
-Suggested Express routes to match what the frontend expects:
+Open <http://localhost:5173>.
 
-| Method | Route                        | Purpose                                  |
-|--------|------------------------------|-------------------------------------------|
-| POST   | `/api/auth/signup`           | create user, return `{ token, user }`     |
-| POST   | `/api/auth/login`            | authenticate, return `{ token, user }`     |
-| GET    | `/api/users/me`               | current user (xp, hearts, streak, badges) |
-| GET    | `/api/courses`                | list of courses with skill-tree nodes     |
-| GET    | `/api/lessons/:lessonId`      | a lesson's question sequence              |
-| POST   | `/api/lessons/:lessonId/complete` | submit results, award XP              |
-| GET    | `/api/leaderboard`            | ranked list of users by XP                |
+On first start the API fills an empty database with 8 courses and 44
+lessons, and creates the instructor account from `backend/.env`. Lessons
+without questions are stored as drafts.
 
-Suggested Mongoose schemas to get you started:
+### Environment variables (`backend/.env`)
 
-```js
-// models/User.js
-const userSchema = new Schema({
-  name: String,
-  email: { type: String, unique: true },
-  passwordHash: String,
-  xp: { type: Number, default: 0 },
-  hearts: { type: Number, default: 5 },
-  streak: { type: Number, default: 0 },
-  lastActiveDate: Date,
-  badges: [{ id: String, label: String, icon: String }],
-});
+| Variable | Required | Description |
+|---|---|---|
+| `MONGODB_URI` | yes | MongoDB connection string |
+| `JWT_SECRET` | yes | Long random string used to sign login tokens |
+| `PORT` | no | API port (default `4000`) |
+| `CLIENT_ORIGIN` | no | Allowed browser origin for CORS (default `http://localhost:5173`) |
+| `INSTRUCTOR_NAME`, `INSTRUCTOR_EMAIL`, `INSTRUCTOR_PASSWORD` | no | Instructor account created at start-up |
+| `DNS_SERVERS` | no | Comma-separated DNS servers, if your network blocks Atlas SRV lookups (e.g. `1.1.1.1,1.0.0.1`) |
 
-// models/Course.js
-const courseSchema = new Schema({
-  slug: String,
-  title: String,
-  tagline: String,
-  accent: String,
-  icon: String,
-  nodes: [{ id: String, title: String, xp: Number }],
-});
+### Accounts for trying it out
 
-// models/Lesson.js
-const lessonSchema = new Schema({
-  lessonId: String, // matches a node id in a Course
-  title: String,
-  course: String,
-  questions: [
-    {
-      id: String,
-      type: { type: String, enum: ["mcq", "numeric", "order"] },
-      prompt: String,
-      options: [String],       // mcq
-      correctIndex: Number,    // mcq
-      answer: Number,          // numeric
-      items: [String],         // order (correct order)
-      explanation: String,
-    },
-  ],
-});
-```
+| Role | How |
+|---|---|
+| Instructor | Log in with `INSTRUCTOR_EMAIL` / `INSTRUCTOR_PASSWORD` from `backend/.env` (example file: `instructor@curio.dev` / `Instructor123`). You land in the Lesson Studio. |
+| Learner | Create an account on the sign-up page. |
 
-The dev server proxies `/api/*` to `http://localhost:4000` (see
-`vite.config.js`) — point that at wherever your Express server runs, or
-change the port.
+### Scripts (run from the project root)
 
-## Design notes
+| Command | Does |
+|---|---|
+| `npm run dev` | Starts API and web app with auto-reload |
+| `npm run build` | Builds the frontend into `frontend/dist` |
+| `npm start` | Starts the API only (production mode) |
+| `npm run seed` | Seeds an empty database and creates the instructor |
+| `npm run seed:reset` | Deletes all courses, lessons and attempts, then reseeds |
+| `npm test` | Runs the API tests against an in-memory MongoDB |
+| `npm run test:ui` | Runs the Playwright UI tests (uses Microsoft Edge on Windows) |
 
-The visual identity is a bright, playful "gamified learning app" look —
-in the spirit of Duolingo's chunky 3D buttons and skill-tree path, and
-Brilliant's clean white interactive-problem cards — built with an
-original color palette and an original mascot (`src/components/Mascot.jsx`,
-a simple rounded "spark" character), not any existing brand's actual
-assets. Baloo 2 (bubbly, rounded) is used for display type/buttons,
-Nunito for body text, and JetBrains Mono for the occasional equation.
-Buttons use a `shadow-[0_Npx_0_0_#color]` + `translate-y` press effect on
-`:active` for the chunky 3D feel. Colors and fonts are tokens in
-`tailwind.config.js` so you can retheme easily.
+## Database design
 
-## Extending it
+Four collections: `users`, `courses`, `lessons` and `attempts`. Lessons
+reference their course, attempts reference the user, lesson and course, and
+questions and progress are embedded. See **[docs/DATABASE.md](docs/DATABASE.md)**
+for the ERD, keys, indexes and integrity rules.
 
-- Add more courses/lessons in `mockData.js` (or your MongoDB) — the
-  Dashboard and Lesson pages are fully data-driven, no page changes needed.
-- `QuestionCard.jsx` supports three question types (`mcq`, `numeric`,
-  `order`). Add a new `type` there to support things like matching pairs
-  or free-text input.
-- Hook up real JWT auth by having `login`/`signup` in `api.js` store the
-  real token (already scaffolded) and protecting routes with a simple
-  `<RequireAuth>` wrapper around `App.jsx`'s routes.
+## REST API
+
+All endpoints are under `/api`. Requests and responses use JSON. Protected
+endpoints need an `Authorization: Bearer <token>` header. Errors always look
+like `{ "message": "...", "errors": { "field": "message" } }`.
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/auth/signup` | – | Create a learner account → `{ token, user }` |
+| POST | `/auth/login` | – | Log in → `{ token, user }` |
+| GET | `/users/me` | user | Current user |
+| PATCH | `/users/me` | user | Update name, bio |
+| DELETE | `/users/me` | user | Delete account (body: `{ password }`) |
+| PUT | `/users/me/course-profiles/:courseSlug` | user | Save goal, level and pace for a course |
+| PUT | `/users/me/active-course` | user | Choose the active course |
+| GET | `/courses` | optional | Published courses with each learner's path status |
+| GET | `/lessons/:slug` | – | A published lesson's questions |
+| POST | `/lessons/:slug/complete` | user | Submit a result; awards XP, updates streak and league |
+| GET | `/leaderboard` | user | This week's league standings |
+| GET | `/leagues` | user | League tiers and current league |
+| POST | `/leagues/result/seen` | user | Dismiss last week's result |
+| GET | `/studio/courses` | instructor | All courses with lesson counts |
+| GET | `/studio/lessons` | instructor | List lessons. Query: `search`, `course`, `status` (`published`/`draft`), `difficulty`, `sort` (`newest`, `oldest`, `title`, `-title`, `xp`, `-xp`, `order`), `page`, `limit` |
+| POST | `/studio/lessons` | instructor | Create a lesson → `201` |
+| GET | `/studio/lessons/:id` | instructor | One lesson with course, author and statistics |
+| PUT | `/studio/lessons/:id` | instructor | Update a lesson |
+| DELETE | `/studio/lessons/:id` | instructor | Delete a lesson and its attempts/progress |
+| GET | `/health` | – | API and database status |
+
+Status codes: `200` OK, `201` created, `204` deleted (account), `400`
+validation error, `401` not logged in, `403` wrong role, `404` not found,
+`409` duplicate slug/email, `429` too many login attempts, `500` server
+error.
+
+## Validation and error handling
+
+- **Client side** (`frontend/src/lib/validation.js`): sign-up, login, profile
+  and lesson forms are checked before sending; each message is shown under
+  its field with `aria-invalid` set.
+- **Server side** (`backend/src/validators`): Zod schemas validate every body
+  and query string, including each nested question (e.g. a multiple-choice
+  question needs 2–6 options and a valid correct answer). Mongoose schemas
+  repeat the key rules as a last line of defence.
+- **Errors** go through one handler (`backend/src/middleware/errorHandler.js`)
+  that turns validation, duplicate-key, bad-id and unknown-route errors into
+  clear JSON responses. The frontend shows loading, empty and error states
+  with a retry button, and rate-limits login attempts.
+
+## Testing
+
+- `npm test`: 18 API tests covering sign-up/login validation, role checks,
+  all four lesson CRUD operations (including search/filter/sort/pagination,
+  nested-question validation, duplicate slugs and cascade delete), account
+  update/delete, and migration of older data.
+- `npm run test:ui`: 16 browser tests covering the learner screens, the Lesson
+  Studio CRUD flow with validation messages, role redirects, and mobile
+  layouts without horizontal overflow.
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Sign-up validation](docs/screenshots/01-signup-validation.png) Sign-up with validation | ![Dashboard](docs/screenshots/02-dashboard.png) Learner dashboard |
+| ![Lesson](docs/screenshots/03-lesson.png) Interactive lesson | ![Profile](docs/screenshots/04-profile.png) Profile and account |
+| ![Studio list](docs/screenshots/05-studio-list.png) Lesson Studio list | ![Filter and sort](docs/screenshots/06-studio-filter-sort.png) Filtered and sorted |
+| ![Create validation](docs/screenshots/07-studio-create-validation.png) Create: validation | ![Create form](docs/screenshots/08-studio-create-form.png) Create: filled form |
+| ![Detail](docs/screenshots/09-studio-detail.png) Lesson detail | ![Delete](docs/screenshots/10-studio-delete-confirm.png) Delete confirmation |
+| ![Mobile studio](docs/screenshots/11-mobile-studio.png) Mobile studio | ![Mobile dashboard](docs/screenshots/12-mobile-dashboard.png) Mobile dashboard |
+
+To regenerate the screenshots (runs the whole stack on a temporary in-memory
+database): `node scripts/capture-screenshots.mjs`.
