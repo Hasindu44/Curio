@@ -6,7 +6,10 @@ import { buildPath } from "../services/progress.service.js";
 export async function listCourses(req, res) {
   const [courses, lessons] = await Promise.all([
     Course.find({ published: true }).sort({ order: 1 }).lean(),
-    Lesson.find().select("slug title xp course order published").sort({ order: 1 }).lean(),
+    Lesson.aggregate([
+      { $sort: { order: 1 } },
+      { $project: { slug: 1, title: 1, xp: 1, course: 1, order: 1, published: 1, summary: 1, difficulty: 1, estimatedMinutes: 1, questionCount: { $size: "$questions" } } },
+    ]),
   ]);
   const completed = new Set((req.user?.lessonProgress ?? [])
     .filter((item) => item.status === "completed")

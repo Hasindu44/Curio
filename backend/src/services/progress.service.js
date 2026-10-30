@@ -6,12 +6,15 @@ const DAY_MS = 86400000;
 
 // Builds a course's learning path from its lessons. A published lesson is
 // "active" once every published lesson before it is complete; drafts always
-// show as locked ("coming soon").
+// show as locked and are flagged so the path can mark them "coming soon".
 export function buildPath(lessons, completedIds) {
   let unlocked = true;
   return lessons.map((lesson) => {
-    const node = { id: lesson.slug, title: lesson.title, xp: lesson.xp };
-    if (!lesson.published) return { ...node, status: "locked" };
+    const node = {
+      id: lesson.slug, title: lesson.title, xp: lesson.xp, summary: lesson.summary ?? "",
+      difficulty: lesson.difficulty, minutes: lesson.estimatedMinutes, questionCount: lesson.questionCount ?? 0,
+    };
+    if (!lesson.published) return { ...node, status: "locked", draft: true };
     if (completedIds.has(lesson._id.toString())) return { ...node, status: "completed" };
     const status = unlocked ? "active" : "locked";
     unlocked = false;

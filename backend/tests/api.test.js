@@ -114,9 +114,12 @@ describe("lesson studio CRUD", () => {
   });
 
   test("read: searches, filters, sorts and paginates", async () => {
-    const search = await api.get("/api/studio/lessons?search=torq").set(auth(instructor));
+    const search = await api.get("/api/studio/lessons?search=wrench").set(auth(instructor));
     assert.deepEqual(search.body.items.map((l) => l.slug), ["torque"]);
 
+    for (const title of ["Pulleys", "Friction"]) {
+      await api.post("/api/studio/lessons").set(auth(instructor)).send(validLesson({ title, slug: title.toLowerCase(), published: false, questions: [] }));
+    }
     const drafts = await api.get(`/api/studio/lessons?course=${courseId}&status=draft&sort=title`).set(auth(instructor));
     assert.ok(drafts.body.items.length > 0);
     assert.ok(drafts.body.items.every((l) => !l.published && l.course._id === courseId));
@@ -139,6 +142,15 @@ describe("lesson studio CRUD", () => {
     assert.equal(res.body.course.slug, "mechanics");
     assert.equal(res.body.stats.attempts, 0);
     assert.equal((await api.get("/api/studio/lessons/not-an-id").set(auth(instructor))).status, 404);
+  });
+
+  test("every seeded lesson is playable and the path previews its content", async () => {
+    const res = await api.get("/api/courses").set(auth(learner));
+    const calculus = res.body.find((c) => c.id === "calculus");
+    assert.equal(calculus.nodes[0].status, "active");
+    assert.ok(calculus.nodes.every((n) => n.summary && n.questionCount > 0 && n.minutes > 0));
+    const locked = calculus.nodes.find((n) => n.status === "locked");
+    assert.equal((await api.get(`/api/lessons/${locked.id}`)).status, 200);
   });
 
   test("published lessons appear in the learner path", async () => {

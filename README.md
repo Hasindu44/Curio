@@ -86,8 +86,10 @@ npm run dev
 Open <http://localhost:5173>.
 
 On first start the API fills an empty database with 8 courses and 44
-lessons, and creates the instructor account from `backend/.env`. Lessons
-without questions are stored as drafts.
+lessons, all with questions, and creates the instructor account from
+`backend/.env`. On later starts, any seeded lesson still saved as an empty
+draft gets its questions from the catalog; lessons an instructor has edited are
+left alone.
 
 ### Environment variables (`backend/.env`)
 
@@ -141,7 +143,7 @@ like `{ "message": "...", "errors": { "field": "message" } }`.
 | DELETE | `/users/me` | user | Delete account (body: `{ password }`) |
 | PUT | `/users/me/course-profiles/:courseSlug` | user | Save goal, level and pace for a course |
 | PUT | `/users/me/active-course` | user | Choose the active course |
-| GET | `/courses` | optional | Published courses with each learner's path status |
+| GET | `/courses` | optional | Published courses with each learner's path status and a preview of every lesson (summary, steps, minutes, XP) |
 | GET | `/lessons/:slug` | – | A published lesson's questions |
 | POST | `/lessons/:slug/complete` | user | Submit a result; awards XP, updates streak and league |
 | GET | `/leaderboard` | user | This week's league standings |

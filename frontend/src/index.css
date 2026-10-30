@@ -318,6 +318,92 @@ body {
 .anim-wave { animation: wave 3.2s ease-in-out infinite; }
 .anim-glow { animation: glow 1.8s ease-in-out infinite; }
 
+/* ---------- Pip the mascot ----------
+   Each mood has its own body loop; the shadow follows jumps. --pip-delay is a
+   per-instance offset so several mascots on one page don't move in lockstep.
+   Hovering a playful mascot makes it hop. Units are SVG user units (viewBox 120). */
+.pip-motion { transform-box: fill-box; transform-origin: 50% 100%; }
+.pip-shadow { transform-box: fill-box; transform-origin: center; }
+.pip-bounce { animation: pip-bounce 2.6s ease-in-out var(--pip-delay, 0s) infinite; }
+.pip-jump { animation: pip-jump 1.5s cubic-bezier(.4, 0, .3, 1) infinite; }
+.pip-jump-shadow { animation: pip-jump-shadow 1.5s cubic-bezier(.4, 0, .3, 1) infinite; }
+.pip-ponder { animation: pip-ponder 4.2s ease-in-out var(--pip-delay, 0s) infinite; }
+.pip-droop { animation: pip-droop 5s ease-in-out var(--pip-delay, 0s) infinite; }
+.pip-blink { animation: pip-blink 5.4s ease-in-out var(--pip-delay, 0s) infinite; }
+.pip-glance { animation: pip-glance 7s ease-in-out var(--pip-delay, 0s) infinite; }
+.pip-search { animation: pip-search 4.2s ease-in-out var(--pip-delay, 0s) infinite; }
+.pip-cheer { animation: pip-cheer .75s ease-in-out infinite; }
+.pip-cheer-alt { animation: pip-cheer .75s ease-in-out -.375s infinite; }
+.pip-tear { animation: pip-tear 2.8s ease-in var(--pip-delay, 0s) infinite; }
+.pip-dot { transform-box: fill-box; transform-origin: center; animation: pip-dot 2.4s ease-in-out infinite; }
+.pip-dot:nth-child(2) { animation-delay: .3s; }
+.pip-dot:nth-child(3) { animation-delay: .6s; }
+.pip-sparkle { transform-box: fill-box; transform-origin: center; animation: twinkle 1.5s ease-in-out infinite; }
+.pip-sparkle:nth-child(2) { animation-delay: .5s; }
+.pip-sparkle:nth-child(3) { animation-delay: 1s; }
+.pip-playful:hover .pip-motion { animation: pip-jump .9s cubic-bezier(.4, 0, .3, 1) infinite; }
+.pip-playful:hover .pip-shadow { animation: pip-jump-shadow .9s cubic-bezier(.4, 0, .3, 1) infinite; }
+
+@keyframes pip-bounce {
+  0%, 60%, 100% { transform: translateY(0) scale(1, 1); }
+  70% { transform: translateY(0) scale(1.04, .95); }
+  80% { transform: translateY(-5px) scale(.98, 1.03); }
+  90% { transform: translateY(0) scale(1.02, .98); }
+}
+@keyframes pip-jump {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  12% { transform: translateY(0) scale(1.1, .88); }
+  32% { transform: translateY(-15px) scale(.94, 1.08); }
+  48% { transform: translateY(-17px) scale(1, 1); }
+  66% { transform: translateY(0) scale(1.08, .92); }
+  78% { transform: translateY(0) scale(.98, 1.02); }
+  88% { transform: translateY(0) scale(1, 1); }
+}
+@keyframes pip-jump-shadow {
+  0%, 100%, 66% { transform: scale(1); opacity: .1; }
+  12% { transform: scale(1.1); opacity: .12; }
+  40% { transform: scale(.6); opacity: .05; }
+}
+@keyframes pip-ponder {
+  0%, 100% { transform: rotate(0deg); }
+  30%, 45% { transform: rotate(-5deg); }
+  70%, 85% { transform: rotate(3deg); }
+}
+@keyframes pip-droop {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(1.5px) rotate(-2.5deg); }
+}
+@keyframes pip-blink {
+  0%, 40%, 44%, 86%, 89.5%, 93%, 100% { transform: scaleY(1); }
+  42% { transform: scaleY(.1); }
+  88% { transform: scaleY(.1); }
+  91% { transform: scaleY(.1); }
+}
+@keyframes pip-glance {
+  0%, 18%, 50%, 62%, 100% { transform: translate(0, 0); }
+  24%, 42% { transform: translate(-3px, 0); }
+  68%, 84% { transform: translate(3px, -1px); }
+}
+@keyframes pip-search {
+  0%, 100% { transform: translate(0, 0); }
+  30%, 45% { transform: translate(-3px, -2px); }
+  70%, 85% { transform: translate(2px, -2px); }
+}
+@keyframes pip-cheer {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-16deg); }
+}
+@keyframes pip-tear {
+  0%, 15% { transform: translateY(0) scale(.4); opacity: 0; }
+  30% { transform: translateY(0) scale(1); opacity: .85; }
+  85% { transform: translateY(9px) scale(1); opacity: .85; }
+  100% { transform: translateY(11px) scale(.8); opacity: 0; }
+}
+@keyframes pip-dot {
+  0%, 100% { transform: scale(.4); opacity: 0; }
+  25%, 75% { transform: scale(1); opacity: 1; }
+}
+
 /* Form validation states */
 .field.is-invalid { border-color: #ff5a55; background: var(--coral-soft); }
 .field.is-invalid:focus { border-color: #e0403b; }

@@ -217,3 +217,29 @@ test("leagues: weekly result is shown once, then standings", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "Sapphire League" })).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
+
+test("path: every lesson node previews its content", async ({ page }, info) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await fixtures(page);
+  await page.goto("/dashboard");
+  const locked = page.getByRole("button", { name: "Series, locked" });
+  await locked.click();
+  const preview = page.getByRole("group", { name: "Series preview" });
+  await expect(preview.getByText("Add infinitely many terms and decide when the sum is finite")).toBeVisible();
+  await expect(preview.getByText("4 steps")).toBeVisible();
+  await expect(preview.getByText("Finish “Integrals” to unlock this lesson.")).toBeVisible();
+  await expect(preview.getByRole("button", { name: "Locked" })).toBeDisabled();
+  await noOverflow(page);
+  await page.screenshot({ path: info.outputPath("path-locked-preview.png") });
+  await page.keyboard.press("Escape");
+  await expect(preview).toHaveCount(0);
+  await expect(locked).toBeFocused();
+
+  await page.getByRole("button", { name: "Chain Rule, up next" }).click();
+  await expect(page.getByRole("link", { name: "Start · +25 XP" })).toHaveAttribute("href", "/lesson/chain-rule");
+  await page.getByRole("button", { name: "Limits, completed, tap to review" }).click();
+  await expect(page.getByRole("group", { name: "Chain Rule preview" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Review lesson" })).toBeVisible();
+  await page.locator("h1").first().click();
+  await expect(page.getByRole("group")).toHaveCount(0);
+});

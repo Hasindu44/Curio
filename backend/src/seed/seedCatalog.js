@@ -48,6 +48,22 @@ async function migrateLegacyCatalog() {
   return true;
 }
 
+// Databases seeded before every lesson had questions still hold empty drafts.
+// Fill those (and only those, so instructor edits are kept) from the catalog.
+async function fillEmptyDrafts() {
+  const drafts = await Lesson.find({ published: false, questions: { $size: 0 } }).select("slug summary");
+  const bySlug = new Map(lessons.map((lesson) => [lesson.slug, lesson]));
+  let filled = 0;
+  for (const draft of drafts) {
+    const source = bySlug.get(draft.slug);
+    if (!source?.questions.length) continue;
+    draft.set({ questions: source.questions, summary: draft.summary || source.summary, estimatedMinutes: source.estimatedMinutes, published: true });
+    await draft.save();
+    filled += 1;
+  }
+  if (filled) console.log(`Added questions to ${filled} draft lessons`);
+}
+
 // Creates the instructor account from .env so the Lesson Studio can be opened.
 export async function ensureInstructor() {
   const { name, email, password } = env.instructor;
@@ -67,6 +83,8 @@ export async function seedCatalog() {
   if (!(await migrateLegacyCatalog()) && (await Course.estimatedDocumentCount()) === 0) {
     await insertCatalog();
     console.log(`Seeded ${courses.length} courses and ${lessons.length} lessons`);
+  } else {
+    await fillEmptyDrafts();
   }
   await ensureInstructor();
 }

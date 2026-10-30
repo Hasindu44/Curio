@@ -60,3 +60,19 @@ test("legacy catalog, progress and attempts are re-linked by slug", async () => 
   await seedCatalog();
   assert.equal(await Lesson.countDocuments({ slug: "chain-rule" }), 1);
 });
+
+test("empty drafts from an older seed get their questions", async () => {
+  const limits = await Lesson.findOne({ slug: "limits" });
+  await Lesson.updateOne({ _id: limits._id }, { $set: { published: false, questions: [], summary: "" } });
+  await Lesson.updateOne({ slug: "derivatives" }, { $set: { published: false, questions: [{ id: "mine", type: "numeric", prompt: "Instructor draft", answer: 1 }] } });
+
+  await seedCatalog();
+
+  const filled = await Lesson.findById(limits._id);
+  assert.ok(filled.published);
+  assert.ok(filled.questions.length > 0);
+  assert.ok(filled.summary);
+  const edited = await Lesson.findOne({ slug: "derivatives" });
+  assert.equal(edited.published, false);
+  assert.deepEqual(edited.questions.map((q) => q.id), ["mine"]);
+});

@@ -29,8 +29,11 @@ Lesson/math code is loaded separately from the landing page.
 See the setup steps in the [README](../README.md). `npm run dev` starts the
 web app and the API together.
 
-Some catalog nodes are drafts without questions; they show as locked “coming
-soon” steps on the path, and opening one shows a recovery screen.
+Every seeded lesson ships with questions. Tapping any node on the path opens a
+preview card with the lesson's summary, step count, length and XP: unlocked
+lessons get a Start or Review button, locked ones say which lesson to finish
+first. Lessons an instructor saves as drafts show as “coming soon”, and opening
+one directly shows a recovery screen.
 
 ## Verification
 
@@ -62,7 +65,10 @@ platforms, install Playwright Chromium first with `npx playwright install chromi
 - `frontend/src/components/common/FormField.jsx`: label, hint and error message
   for one input, with `aria-invalid` and `aria-describedby` set.
 - `frontend/src/components/lesson/LessonFooter.jsx`: the check / feedback bar used by every lesson step.
-- `frontend/src/components/common/Mascot.jsx`: Pip the robot (`happy` waves, `excited` cheers, `sad`, `thinking`).
+- `frontend/src/components/common/Mascot.jsx`: Pip the robot. `happy` bounces, waves
+  and glances around; `excited` jumps with squash and stretch, cheers and sparkles;
+  `sad` droops and sheds a tear; `thinking` tilts its head with thought dots. Every
+  mood blinks, and all but `sad` hop on hover.
 - `frontend/src/pages/`: one component per screen; `pages/studio/` holds the
   Lesson Studio list, detail and editor.
 
