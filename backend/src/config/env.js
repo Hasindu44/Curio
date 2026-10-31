@@ -1,12 +1,8 @@
 import "dotenv/config";
 
-// Read once at startup so a missing setting fails fast with a clear message.
+// Read once at startup. server.js reports any missing setting.
 const required = ["MONGODB_URI", "JWT_SECRET"];
-const missing = required.filter((key) => !process.env[key]);
-if (missing.length && process.env.NODE_ENV !== "test") {
-  console.error(`Missing ${missing.join(", ")}. Copy backend/.env.example to backend/.env and fill them in.`);
-  process.exit(1);
-}
+export const missingEnv = required.filter((key) => !process.env[key]);
 
 export const env = {
   mongoUri: process.env.MONGODB_URI,
